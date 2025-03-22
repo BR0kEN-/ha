@@ -1,0 +1,22 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: no
+
+  vars_files:
+    - env.yml
+
+  pre_tasks:
+    - name: "Update the APT cache"
+      ansible.builtin.apt:
+        update_cache: yes
+
+  roles:
+    - role: vim
+      tags: vim
+
+    - role: ha
+      tags: ha
+
+    - role: 1wire
+      tags: 1wire
