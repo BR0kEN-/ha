@@ -1,0 +1,63 @@
+---
+- name: "Check the Cloudflare tunnel"
+  ansible.builtin.uri:
+    url: "https://api.cloudflare.com/client/v4/accounts/{{ ha.cloudflare.account.id }}/cfd_tunnel?name={{ ha.cloudflare.hostname }}&is_deleted=false"
+    headers:
+      Authorization: "Bearer {{ ha.cloudflare.account.token }}"
+  register: cf_tunnel
+
+- ansible.builtin.include_tasks: cleanup.yml
+  loop_control:
+    loop_var: tunnel
+  loop: "{{ cf_tunnel.json.result }}"
+  when: cf_tunnel.json.result | length > 0
+
+- name: "Create the Cloudflare tunnel"
+  ansible.builtin.uri:
+    url: "https://api.cloudflare.com/client/v4/accounts/{{ ha.cloudflare.account.id }}/cfd_tunnel"
+    method: POST
+    body_format: json
+    headers:
+      Authorization: "Bearer {{ ha.cloudflare.account.token }}"
+    body:
+      name: "{{ ha.cloudflare.hostname }}"
+      config_src: "cloudflare"
+    status_code: 200
+  register: cf_tunnel
+
+- name: "Configure the Cloudflare tunnel"
+  # noinspection HttpUrlsUsage
+  ansible.builtin.uri:
+    url: "https://api.cloudflare.com/client/v4/accounts/{{ ha.cloudflare.account.id }}/cfd_tunnel/{{ cf_tunnel.json.result.id }}/configurations"
+    method: PUT
+    body_format: json
+    headers:
+      Authorization: "Bearer {{ ha.cloudflare.account.token }}"
+    body:
+      config:
+        ingress:
+          - service: "http://homeassistant:{{ ha.ports.ui }}"
+            hostname: "{{ ha.cloudflare.hostname }}"
+            originRequest: {}
+          - service: "http_status:404"
+    status_code: 200
+
+- name: "Configure the DNS for Cloudflare tunnel"
+  ansible.builtin.uri:
+    url: "https://api.cloudflare.com/client/v4/zones/{{ ha.cloudflare.account.zone }}/dns_records"
+    method: POST
+    body_format: json
+    headers:
+      Authorization: "Bearer {{ ha.cloudflare.account.token }}"
+    body:
+      type: CNAME
+      name: "{{ ha.cloudflare.hostname }}"
+      proxied: true
+      content: "{{ cf_tunnel.json.result.id }}.cfargotunnel.com"
+    status_code: 200
+
+- name: "Install and configure the Cloudflared plugin"
+  ansible.builtin.script:
+    cmd: "files/ha-cloudflared-install.sh 'https://github.com/brenner-tobias/ha-addons' '{{ cf_tunnel.json.result.token }}'"
+  args:
+    executable: /bin/bash

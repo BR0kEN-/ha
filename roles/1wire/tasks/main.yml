@@ -1,0 +1,41 @@
+---
+- name: "Update firmware config"
+  ansible.builtin.template:
+    src: "boot-{{ file }}.txt.j2"
+    dest: "/boot/firmware/{{ file }}.txt"
+    mode: "0755"
+  loop_control:
+    loop_var: file
+  loop:
+    - config
+    - cmdline
+
+- name: "Disable the ttyAMA0 service"
+  ansible.builtin.systemd_service:
+    name: "serial-getty@ttyAMA0.service"
+    state: stopped
+    enabled: no
+
+- name: "Install software"
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - owfs
+    - ow-shell
+
+- name: "Configure the driver"
+  ansible.builtin.template:
+    src: "owfs.conf.j2"
+    dest: "/etc/owfs.conf"
+    mode: "0644"
+
+- name: "Restart OW server"
+  ansible.builtin.systemd_service:
+    name: owserver
+    state: restarted
+
+- name: "Reboot the device"
+  ansible.builtin.reboot:
+    test_command: "owdir /uncached | grep -E 'bus.[0-9]+'"
+    reboot_timeout: 180

@@ -1,0 +1,9 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "hanest"
+version = "0.1.0"
+dependencies = [
+    "ansible==11.3"
+]

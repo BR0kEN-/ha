@@ -1,0 +1,19 @@
+/*
+.*
+
+!/.git*
+!/ansible.cfg
+!/env.yml.example
+!/inventory.ini
+!/Makefile
+!/pyproject.toml
+!/README.md
+!/*.yml
+!/*.j2
+
+# The userland configuration.
+/env.yml
+
+!/roles/
+/roles/*
+!/roles/**/

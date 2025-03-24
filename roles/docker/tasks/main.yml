@@ -1,0 +1,29 @@
+---
+- name: "Download the installer"
+  ansible.builtin.get_url:
+    url: "https://get.docker.com"
+    dest: "/etc/docker/installer.sh"
+    mode: "0644"
+
+- name: "Install"
+  ansible.builtin.shell: |
+    # Override the `sleep` func to avoid https://github.com/docker/docker-install/issues/183
+    sleep() { return 0; }
+
+    # Make it available for separate Bash scripts.
+    export -f sleep
+
+    # Run with Bash to use overridden `sleep` (does not work in `sh`).
+    bash /etc/docker/installer.sh --version {{ docker.version }}
+
+    # Remove hacked `sleep`.
+    unset -f sleep
+  args:
+    executable: /bin/bash
+
+- name: "Make sudo-less"
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    append: yes
+    groups:
+      - docker

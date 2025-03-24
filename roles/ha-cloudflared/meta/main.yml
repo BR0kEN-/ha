@@ -1,0 +1,4 @@
+---
+dependencies:
+  - role: ha
+    tags: ha
