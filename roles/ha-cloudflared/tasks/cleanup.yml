@@ -1,0 +1,29 @@
+---
+- name: "Delete the existing Cloudflare tunnel connections"
+  ansible.builtin.uri:
+    url: "https://api.cloudflare.com/client/v4/accounts/{{ ha.cloudflare.account.id }}/cfd_tunnel/{{ tunnel.id }}/connections"
+    method: DELETE
+    headers:
+      Authorization: "Bearer {{ ha.cloudflare.account.token }}"
+
+- name: "Delete the existing Cloudflare tunnel"
+  ansible.builtin.uri:
+    url: "https://api.cloudflare.com/client/v4/accounts/{{ ha.cloudflare.account.id }}/cfd_tunnel/{{ tunnel.id }}"
+    method: DELETE
+    headers:
+      Authorization: "Bearer {{ ha.cloudflare.account.token }}"
+
+- name: "Check the Cloudflare tunnel DNS records"
+  ansible.builtin.uri:
+    url: "https://api.cloudflare.com/client/v4/zones/{{ ha.cloudflare.account.zone }}/dns_records?name[exact]={{ ha.cloudflare.hostname }}&type=CNAME"
+    headers:
+      Authorization: "Bearer {{ ha.cloudflare.account.token }}"
+  register: cf_dns
+
+- name: "Delete the existing Cloudflare tunnel DNS records"
+  ansible.builtin.uri:
+    url: "https://api.cloudflare.com/client/v4/zones/{{ ha.cloudflare.account.zone }}/dns_records/{{ item.id }}"
+    method: DELETE
+    headers:
+      Authorization: "Bearer {{ ha.cloudflare.account.token }}"
+  loop: "{{ cf_dns.json.result }}"

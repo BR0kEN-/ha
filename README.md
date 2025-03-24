@@ -25,7 +25,8 @@
    cp env.yml.example env.yml
    ```
 
-   Most of the values can stay as they are but `ha.cloudflare.account` details must be provided!
+   - Most of the values can stay as they are but `ha.cloudflare.*` details must be provided!
+   - There is only `CNAME` tunnel support (subdomain).
 
 5. ```bash
    make run
@@ -35,6 +36,14 @@
    ```bash
    make run -- --tags=vim
    ```
+
+## Shortcuts
+
+### Reinstall and reconfigure the Cloudflare tunnel
+
+```bash
+make run -- --tags=cf --skip-tags=ha
+```
 
 ## Equipment
 

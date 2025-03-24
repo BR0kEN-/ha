@@ -18,5 +18,8 @@
     - role: ha
       tags: ha
 
+    - role: ha-cloudflared
+      tags: cf
+
     - role: 1wire
       tags: 1wire

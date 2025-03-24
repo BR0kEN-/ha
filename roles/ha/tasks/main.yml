@@ -1,46 +1,44 @@
 ---
-#- name: "Install the OS agent"
-#  ansible.builtin.apt:
-#    deb: "https://github.com/home-assistant/os-agent/releases/download/{{ ha.os_agent.version }}/os-agent_{{ ha.os_agent.version }}_linux_{{ ansible_architecture }}.deb"
-#    state: present
-#
-#- name: "Install the Supervised daemon"
-#  ansible.builtin.apt:
-#    deb: "https://github.com/home-assistant/supervised-installer/releases/download/{{ ha.daemon.version }}/homeassistant-supervised.deb"
-#    state: present
-#  # Run async to prevent disconnection when the
-#  # networking is restarted by the installer.
-#  async: 600
-#  poll: 10
-#
-#- name: "Configure the Home Assistant"
-#  ansible.builtin.template:
-#    src: "configuration.yaml.j2"
-#    dest: "{{ ha.paths.root }}/configuration.yaml"
-#    mode: "0644"
-#
-#- name: "Compute variables"
-#  ansible.builtin.set_fact:
-#    ha: "{{ ha|combine(_ha, recursive=True) }}"
-#  vars:
-#    _ha:
-#      cs:
-#        path: "{{ ha.paths.root }}/{{ ha.cs.path }}"
-#
-#- name: "Ensure the HACS directory"
-#  ansible.builtin.file:
-#    path: "{{ ha.cs.path }}"
-#    state: directory
-#    recurse: yes
-#    mode: "0755"
-#
-#- name: "Download the HACS"
-#  ansible.builtin.unarchive:
-#    src: "https://github.com/hacs/integration/releases/download/{{ ha.cs.version }}/hacs.zip"
-#    dest: "{{ ha.cs.path }}"
-#    creates: "{{ ha.cs.path }}/__init__.py"
-#    remote_src: yes
-#  notify:
-#    - ha core restart
+- name: "Install the OS agent"
+  ansible.builtin.apt:
+    deb: "https://github.com/home-assistant/os-agent/releases/download/{{ ha.os_agent.version }}/os-agent_{{ ha.os_agent.version }}_linux_{{ ansible_architecture }}.deb"
+    state: present
 
-- ansible.builtin.include_tasks: cloudflared.yml
+- name: "Install the Supervised daemon"
+  ansible.builtin.apt:
+    deb: "https://github.com/home-assistant/supervised-installer/releases/download/{{ ha.daemon.version }}/homeassistant-supervised.deb"
+    state: present
+  # Run async to prevent disconnection when the
+  # networking is restarted by the installer.
+  async: 600
+  poll: 10
+
+- name: "Configure the Home Assistant"
+  ansible.builtin.template:
+    src: "configuration.yaml.j2"
+    dest: "{{ ha.paths.root }}/configuration.yaml"
+    mode: "0644"
+
+- name: "Compute variables"
+  ansible.builtin.set_fact:
+    ha: "{{ ha|combine(_ha, recursive=True) }}"
+  vars:
+    _ha:
+      cs:
+        path: "{{ ha.paths.root }}/{{ ha.cs.path }}"
+
+- name: "Ensure the HACS directory"
+  ansible.builtin.file:
+    path: "{{ ha.cs.path }}"
+    state: directory
+    recurse: yes
+    mode: "0755"
+
+- name: "Download the HACS"
+  ansible.builtin.unarchive:
+    src: "https://github.com/hacs/integration/releases/download/{{ ha.cs.version }}/hacs.zip"
+    dest: "{{ ha.cs.path }}"
+    creates: "{{ ha.cs.path }}/__init__.py"
+    remote_src: yes
+  notify:
+    - ha core restart
