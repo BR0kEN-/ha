@@ -1,0 +1,26 @@
+---
+- name: "Ensure the directory for GPG key"
+  ansible.builtin.file:
+    path: "{{ cloudflare.package.key.dest }}"
+    state: directory
+    recurse: yes
+    mode: "0755"
+
+- name: "Download GPG key"
+  ansible.builtin.get_url:
+    url: "{{ cloudflare.package.key.src }}"
+    dest: "{{ cloudflare.package.key.dest }}{{ cloudflare.package.key.src|ansible.builtin.basename }}"
+    mode: "0644"
+  register: cloudflare_key
+
+- name: "Add repository"
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by={{ cloudflare_key.dest }}] {{ cloudflare.package.src }} any main"
+    state: present
+    filename: cloudflared
+
+- name: "Install"
+  ansible.builtin.apt:
+    name: cloudflared
+    state: present
+    update_cache: yes

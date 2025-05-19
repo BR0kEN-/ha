@@ -42,17 +42,5 @@
 ### Reinstall and reconfigure the Cloudflare tunnel
 
 ```bash
-make run -- --tags=cf --skip-tags=ha
+make run -- --tags=cf
 ```
-
-## Equipment
-
-### 1-Wire Bus Master
-
-- https://arduino.ua/prod4832-master-shini-1-wire-s-galvanicheskoi-razvyazkoi-sdelano-v-ykraine (http://honey.com.ua/master/)
-
-### DS18B20
-
-- 28.258045D4A16C - air
-- 28.746E46D41D45 - mbp
-- 28.6FF345D48465 - balcony

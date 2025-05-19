@@ -18,8 +18,9 @@
     - role: ha
       tags: ha
 
-    - role: ha-cloudflared
+    - role: cloudflared
       tags: cf
 
-    - role: 1wire
-      tags: 1wire
+    # Not used anymore. Climate control moved to another system.
+    #- role: 1wire
+    #  tags: 1wire
