@@ -1,8 +1,16 @@
 ---
 servers:
   hosts:
-    nest1:
+    nest:
       ansible_host: hanest.local
       ansible_user: BR0kEN
       ansible_architecture: aarch64
       ansible_pkg_architecture: arm64
+    # Setup:
+    # - docker run -it -d --rm --name qwerty python:3.12-slim
+    # - docker exec -t qwerty bash -c 'apt update & apt install sudo'
+    #test:
+    #  ansible_host: qwerty
+    #  ansible_connection: docker
+    #  ansible_architecture: amd64
+    #  ansible_pkg_architecture: amd64
