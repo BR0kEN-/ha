@@ -1,0 +1,63 @@
+---
+- name: "Check the Cloudflare tunnel"
+  ansible.builtin.uri:
+    url: "https://api.cloudflare.com/client/v4/accounts/{{ cloudflare.account.id }}/cfd_tunnel?name={{ ansible_host }}&is_deleted=false"
+    headers:
+      Authorization: "Bearer {{ cloudflare.account.token }}"
+  register: cf_tunnel
+
+- ansible.builtin.include_tasks: cleanup.yml
+  loop_control:
+    loop_var: tunnel
+  loop: "{{ cf_tunnel.json.result }}"
+  when: cf_tunnel.json.result|length > 0
+
+- name: "Create the Cloudflare tunnel"
+  ansible.builtin.uri:
+    url: "https://api.cloudflare.com/client/v4/accounts/{{ cloudflare.account.id }}/cfd_tunnel"
+    method: POST
+    body_format: json
+    headers:
+      Authorization: "Bearer {{ cloudflare.account.token }}"
+    body:
+      name: "{{ ansible_host }}"
+      config_src: "cloudflare"
+    status_code: 200
+  register: cf_tunnel
+
+- name: "Configure the Cloudflare tunnel"
+  ansible.builtin.uri:
+    url: "https://api.cloudflare.com/client/v4/accounts/{{ cloudflare.account.id }}/cfd_tunnel/{{ cf_tunnel.json.result.id }}/configurations"
+    method: PUT
+    body_format: json
+    headers:
+      Authorization: "Bearer {{ cloudflare.account.token }}"
+    body:
+      config:
+        ingress: "{{ cloudflare.tunnel.ingress + [{'service': 'http_status:404'}] }}"
+    status_code: 200
+
+- name: "Configure the DNS for Cloudflare tunnel"
+  ansible.builtin.uri:
+    url: "https://api.cloudflare.com/client/v4/zones/{{ cloudflare.account.zone }}/dns_records"
+    method: POST
+    body_format: json
+    headers:
+      Authorization: "Bearer {{ cloudflare.account.token }}"
+    body:
+      type: CNAME
+      name: "{{ item.hostname }}"
+      proxied: true
+      content: "{{ cf_tunnel.json.result.id }}.{{ cloudflare.tunnel.tld }}"
+    status_code: 200
+  loop: "{{ cloudflare.tunnel.ingress }}"
+
+- ansible.builtin.include_tasks: install-cloudflared.yml
+
+- name: "Ensure no outdated service"
+  ansible.builtin.file:
+    path: "/etc/init.d/cloudflared"
+    state: absent
+
+- name: "Install the service"
+  ansible.builtin.shell: "cloudflared service install '{{ cf_tunnel.json.result.token }}'"
